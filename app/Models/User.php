@@ -13,21 +13,31 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
 {
     use Authenticatable, Authorizable, HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
+    protected $table = 'user';
+    protected $primaryKey = 'user_id';
     protected $fillable = [
-        'name', 'email',
+        'division_id','name', 'email','token','status','company_id','level'
     ];
-
-    /**
-     * The attributes excluded from the model's JSON form.
-     *
-     * @var array
-     */
+ 
     protected $hidden = [
         'password',
     ];
+
+    public $timestamps = true;
+    
+    public function getCreatedAtAttribute()
+    {
+        return \Carbon\Carbon::parse($this->attributes['created_at'])
+          ->format('Y-m-d H:i:s');
+    }
+    public function getUpdatedAtAttribute()
+    {
+        return \Carbon\Carbon::parse($this->attributes['updated_at'])
+           ->format('Y-m-d H:i:s');
+    }
+
+    public function division()
+    {
+        return $this->belongsTo(DivisionMaster::class, 'division_id','division_id');
+    }
 }

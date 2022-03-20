@@ -15,7 +15,7 @@ class JwtMiddleware
             // Unauthorized response if token not there
 			
 			return response()
-				->json(['status'=>401 ,'datas' => [], 'errors' => ['message' => "Token not provided."]])
+				->json(['status'=>401 ,'datas' => null, 'errors' => ['message' => ["Token not provided."]]])
 				->withHeaders([
 				  'Content-Type'          => 'application/json',
 				  ])
@@ -25,18 +25,18 @@ class JwtMiddleware
             $credentials = JWT::decode($token, env('JWT_SECRET'), ['HS256']);
         } catch(ExpiredException $e) {
 			return response()
-				->json(['status'=>400 ,'datas' => [], 'errors' => ['message' => "Provided token is expired."]])
+				->json(['status'=>401 ,'datas' => null, 'errors' => ['message' => ["Provided token is expired."]]])
 				->withHeaders([
 				  'Content-Type'          => 'application/json',
 				  ])
-				->setStatusCode(400);
+				->setStatusCode(401);
         } catch(Exception $e) {
 			return response()
-				->json(['status'=>400 ,'datas' => [], 'errors' => ['message' => "An error while decoding token."]])
+				->json(['status'=>401 ,'datas' => null, 'errors' => ['message' => ["An error while decoding token."]]])
 				->withHeaders([
 				  'Content-Type'          => 'application/json',
 				  ])
-				->setStatusCode(400);
+				->setStatusCode(401);
         }
         // $user = User::find($credentials->sub->user_id);
         // Now let's put the user in the request class so that you can grab it from there

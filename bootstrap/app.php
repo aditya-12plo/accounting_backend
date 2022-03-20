@@ -106,6 +106,17 @@ $app->middleware([
 $app->routeMiddleware([
     'jwt.auth' => App\Http\Middleware\JwtMiddleware::class,
 ]);
+$app->routeMiddleware([
+    'lang.auth' => App\Http\Middleware\LangMiddleware::class,
+]);
+
+/*
+|--------------------------------------------------------------------------
+| Load The Langauage
+|--------------------------------------------------------------------------
+*/
+
+app('translator')->setLocale(env('APP_LOCALE', 'en'));
 
 /*
 |--------------------------------------------------------------------------
