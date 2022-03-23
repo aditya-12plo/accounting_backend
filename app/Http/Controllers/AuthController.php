@@ -10,7 +10,9 @@ use Illuminate\Support\Facades\Validator;
 use App,DB;
 use Firebase\JWT\JWT;
 use PDF;
+use Illuminate\Support\Facades\Mail;
 
+use App\Mail\ForgotPasswordNotification;
 use App\Models\Log;
 use App\Models\User;
 use App\Models\Company;
@@ -32,6 +34,106 @@ class AuthController extends Controller
         ->setStatusCode(200);
     
     }
+
+    public function userChangePassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email'         => 'required|email|max:255',
+            'token'         => 'required',
+            'password'      => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()
+            ->json(['status'=>422 ,'datas' => null, 'errors' => $validator->errors()])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(422);
+        }
+
+        $check  = User::where([["email",$request->email],["token",$request->token],["status","active"]])->first();
+        if($check){
+            
+            User::where("user_id",$check->user_id)->update([
+                "password" => sha1($request->password)
+            ]);
+
+            return response()
+            ->json(['status'=>200 ,'datas' =>["messages" => "Successfully"], 'errors' => null])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(200);
+
+        }else{
+            $errors = [
+                "email"   => ["Email does not exist"]
+            ];
+            return response()
+            ->json(['status'=>422 ,'datas' => null, 'errors' => $errors])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(422);
+
+        }
+    }
+
+
+    public function userResetPassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email'         => 'required|email|max:255'
+        ]);
+
+        if ($validator->fails()) {
+            return response()
+            ->json(['status'=>422 ,'datas' => null, 'errors' => $validator->errors()])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(422);
+        }
+
+        $check  = User::where([["email",$request->email],["status","active"]])->first();
+        if($check){
+            $subject    = 'ICDX GROUP ACCOUNTING & BUDGETING SYSTEM - Reset Password';
+            $emails     = [
+                array(
+                    'email' => $check->email,
+                    'name'  => $check->name,
+                    'type'  => 'to'
+                ),
+            ];
+            
+            $link       =  env('FRONT_URL')."/reset-password/{$check->email}/{$check->token}";
+
+
+            Mail::to($emails)->send(new ForgotPasswordNotification($subject,$check,$link));
+
+            return response()
+            ->json(['status'=>200 ,'datas' =>["messages" => "Successfully send to your email"], 'errors' => null])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(200);
+
+        }else{
+            $errors = [
+                "email"   => ["Email does not exist"]
+            ];
+            return response()
+            ->json(['status'=>422 ,'datas' => null, 'errors' => $errors])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(422);
+
+        }
+
+    }
+
 
     public function login(Request $request)
     {
