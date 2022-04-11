@@ -56,7 +56,8 @@ class AuthController extends Controller
         if($check){
             
             User::where("user_id",$check->user_id)->update([
-                "password" => sha1($request->password)
+                "password"      => sha1($request->password),
+                "updated_at"    => date("Y-m-d H:i:s")
             ]);
 
             return response()
@@ -155,10 +156,15 @@ class AuthController extends Controller
         if($check){
             $token  = $this->jwt($check);
              
+            User::where("user_id",$check->user_id)->update([
+                "updated_at"    => date("Y-m-d H:i:s")
+            ]);
+
             $response = [
-                'access_token' => $token,
-                'token_type' => 'bearer',
-                'expires_in' => time() + (1440*60*4)
+                'access_token'  => $token,
+                'refresh_token' => $check->token,
+                'token_type'    => 'bearer',
+                'expires_in'    => time() + (1440*60*7)
             ];
 
             return response()
@@ -188,7 +194,7 @@ class AuthController extends Controller
             'iss' => "token",
             'sub' => $user,
             'iat' => time(),
-            'exp' => time() + (1440*60*4)
+            'exp' => time() + (1440*60*7)
         ];
         
         return JWT::encode($payload, env('JWT_SECRET'));
@@ -198,9 +204,11 @@ class AuthController extends Controller
 
 
     public function profile(Request $request){ 
-        $auth = $request->auth;
+        $auth               = $request->auth;
+        $credentials        = $request->credentials;
+
         return response()
-        ->json(['status'=>200 ,'datas' => $auth, 'errors' => null])
+        ->json(['status'=>200 ,'datas' =>["auth" => $auth, "credentials" => $credentials], 'errors' => null])
         ->withHeaders([
           'Content-Type'          => 'application/json',
           ])

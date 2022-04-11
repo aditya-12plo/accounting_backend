@@ -28,7 +28,8 @@ class UserController extends Controller
 
     public function changePassword(Request $request)
     {
-        $auth = $request->auth;
+        $auth           = $request->auth;
+        $credentials    = $request->credentials;
 
         $validator = Validator::make($request->all(), [
             'password'              => 'required|confirmed',
@@ -44,10 +45,10 @@ class UserController extends Controller
             ->setStatusCode(422);
         }
 
-        User::where("user_id",$auth->user_id)->update(["password" => sha1($request->password)]);
+        User::where("user_id",$auth->user_id)->update(["password" => sha1($request->password),"updated_at"    => date("Y-m-d H:i:s")]);
 
         return response()
-        ->json(['status'=>200 ,'datas' => ["messages" => "Successfully"], 'errors' => null])
+        ->json(['status'=>200 ,'datas' => ["messages" => "Successfully", "credentials" => $credentials], 'errors' => null])
         ->withHeaders([
             'Content-Type'          => 'application/json',
         ])
@@ -56,7 +57,8 @@ class UserController extends Controller
 
     
     public function index(Request $request){
-        $auth                   = $request->auth;
+        $auth           = $request->auth;
+        $credentials    = $request->credentials;
 
         if($auth->level != "ROOT"){
             return response()
@@ -130,7 +132,7 @@ class UserController extends Controller
 		$response = $query->paginate($perPage);
 
         return response()
-        ->json(['status'=>200 ,'datas' => $response, 'errors' => null])
+        ->json(['status'=>200 ,'datas' => ["data" => $response, "credentials" => $credentials], 'errors' => null])
         ->withHeaders([
             'Content-Type'          => 'application/json',
         ])
@@ -140,7 +142,8 @@ class UserController extends Controller
 
     public function updateStatus(Request $request,$user_id)
     {
-        $auth                   = $request->auth;
+        $auth           = $request->auth;
+        $credentials    = $request->credentials;
 
         $validator = Validator::make($request->all(), [
             'status'         => 'required|in:active,deactived',
@@ -155,9 +158,9 @@ class UserController extends Controller
             ->setStatusCode(422);
         }
 
-        User::where("user_id",$user_id)->update(["status" => $request->status]);
+        User::where("user_id",$user_id)->update(["status" => $request->status,"updated_at" => date("Y-m-d H:i:s")]);
         return response()
-        ->json(['status'=>200 ,'datas' => ["messages" => "Successfully"], 'errors' => null])
+        ->json(['status'=>200 ,'datas' => ["messages" => "Successfully" , "credentials" => $credentials], 'errors' => null])
         ->withHeaders([
             'Content-Type'          => 'application/json',
         ])
@@ -167,12 +170,13 @@ class UserController extends Controller
 
     public function detail(Request $request,$user_id)
     {
-        $auth                   = $request->auth;
+        $auth           = $request->auth;
+        $credentials    = $request->credentials;
 
         $check = User::with(["division"])->where("user_id",$user_id)->first();
 
         return response()
-        ->json(['status'=>200 ,'datas' => $check, 'errors' => null])
+        ->json(['status'=>200 ,'datas' => ["data" => $check , "credentials" => $credentials], 'errors' => null])
         ->withHeaders([
             'Content-Type'          => 'application/json',
         ])
@@ -183,7 +187,8 @@ class UserController extends Controller
 
     public function update(Request $request,$user_id)
     {
-        $auth                   = $request->auth;
+        $auth           = $request->auth;
+        $credentials    = $request->credentials;
 
         $validator = Validator::make($request->all(), [
             'name'              => 'required|max:255',
@@ -211,6 +216,7 @@ class UserController extends Controller
                     "division_id"   => $request->division_id,
                     "status"        => $request->status,
                     "password"      => sha1($request->password),
+                    "updated_at"    => date("Y-m-d H:i:s")
                 ]);
 
             }else{
@@ -220,12 +226,13 @@ class UserController extends Controller
                     "email"         => $request->email,
                     "division_id"   => $request->division_id,
                     "status"        => $request->status,
+                    "updated_at"    => date("Y-m-d H:i:s")
                 ]);
                 
             }
 
             return response()
-            ->json(['status'=>200 ,'datas' => ["messages" => "Successfully"], 'errors' => null])
+            ->json(['status'=>200 ,'datas' => ["messages" => "Successfully", "credentials" => $credentials], 'errors' => null])
             ->withHeaders([
                 'Content-Type'          => 'application/json',
             ])
@@ -247,7 +254,8 @@ class UserController extends Controller
 
     public function create(Request $request)
     {
-        $auth                   = $request->auth;
+        $auth           = $request->auth;
+        $credentials    = $request->credentials;
 
         $validator = Validator::make($request->all(), [
             'name'              => 'required|max:255',
@@ -272,10 +280,12 @@ class UserController extends Controller
             "division_id"   => $request->division_id,
             "status"        => $request->status,
             "password"      => sha1($request->password),
+            "token"         => uniqid(),
+            "updated_at"    => date("Y-m-d H:i:s")
         ]);
 
         return response()
-            ->json(['status'=>200 ,'datas' => ["messages" => "Successfully"], 'errors' => null])
+            ->json(['status'=>200 ,'datas' => ["messages" => "Successfully", "credentials" => $credentials], 'errors' => null])
             ->withHeaders([
                 'Content-Type'          => 'application/json',
             ])
@@ -295,8 +305,7 @@ class UserController extends Controller
             ])
             ->setStatusCode(404);
         }
-
-        $perPage        		= $request->per_page;
+ 
         $sort_field     		= $request->sort_field;
         $sort_type      		= $request->sort_type;
 		$file_name				= $request->file_name;
@@ -311,11 +320,7 @@ class UserController extends Controller
         if(!$sort_field){
             $sort_field = "user_id";
             $sort_type  = "DESC";
-        }
-
-        if(!$perPage){
-            $perPage    = 10;
-        }
+        } 
         
 		$query = User::with(["division"])->orderBy($sort_field,$sort_type);
 		
