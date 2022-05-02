@@ -8,9 +8,9 @@ Route::group([
     $router->get('/',['as' => 'index','uses' => 'IndexController@index']);
     $router->get('/get-companys',['as' => 'companyGetAll','uses' => 'CompanyController@getAll']);
 
-    $router->post('/user/login',['as' => 'index','uses' => 'AuthController@login']);
-    $router->post('/user/reset-password',['as' => 'userResetPassword','uses' => 'AuthController@userResetPassword']);
-    $router->post('/user/change-password-from-link',['as' => 'userChangePassword','uses' => 'AuthController@userChangePassword']);
+    $router->post('/auth/login',['as' => 'index','uses' => 'AuthController@login']);
+    $router->post('/auth/reset-password',['as' => 'userResetPassword','uses' => 'AuthController@userResetPassword']);
+    $router->post('/auth/change-password',['as' => 'userChangePassword','uses' => 'AuthController@userChangePassword']);
 
     
     $router->group([

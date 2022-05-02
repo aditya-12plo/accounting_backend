@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use App,DB;
 use Firebase\JWT\JWT;
+use Ramsey\Uuid\Uuid;
 use PDF;
 use Illuminate\Support\Facades\Mail;
 
@@ -16,6 +17,7 @@ use App\Mail\ForgotPasswordNotification;
 use App\Models\Log;
 use App\Models\User;
 use App\Models\Company;
+use App\Models\UserCompany;
 
 class AuthController extends Controller
 { 
@@ -41,6 +43,7 @@ class AuthController extends Controller
             'email'         => 'required|email|max:255',
             'token'         => 'required',
             'password'      => 'required',
+            'company_id'    => 'required|without_spaces|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -55,21 +58,43 @@ class AuthController extends Controller
         $check  = User::where([["email",$request->email],["token",$request->token],["status","active"]])->first();
         if($check){
             
-            User::where("user_id",$check->user_id)->update([
-                "password"      => sha1($request->password),
-                "updated_at"    => date("Y-m-d H:i:s")
-            ]);
+            $check2  = UserCompany::where([["user_id",$check->user_id],["company_id",$request->company_id]])->first();
+            if($check2){
 
-            return response()
-            ->json(['status'=>200 ,'datas' =>["messages" => "Successfully"], 'errors' => null])
-            ->withHeaders([
-                'Content-Type'          => 'application/json',
-            ])
-            ->setStatusCode(200);
+                User::where("user_id",$check->user_id)->update([
+                    "password"      => sha1($request->password),
+                    "token"         => Uuid::uuid1(),
+                    "updated_at"    => date("Y-m-d H:i:s")
+                ]);
+    
+                return response()
+                ->json(['status'=>200 ,'datas' =>["messages" => "Successfully"], 'errors' => null])
+                ->withHeaders([
+                    'Content-Type'          => 'application/json',
+                ])
+                ->setStatusCode(200);
+
+            }else{
+
+                $message = trans("translate.companyDoesNotExist");
+                $errors = [
+                    "company_id"   => [$message]
+                ];
+                return response()
+                ->json(['status'=>422 ,'datas' => null, 'errors' => $errors])
+                ->withHeaders([
+                    'Content-Type'          => 'application/json',
+                ])
+                ->setStatusCode(422);
+
+            }
+
 
         }else{
+            $message = trans("translate.emailDoesNotExist");
+      
             $errors = [
-                "email"   => ["Email does not exist"]
+                "email"   => [$message]
             ];
             return response()
             ->json(['status'=>422 ,'datas' => null, 'errors' => $errors])
@@ -85,7 +110,8 @@ class AuthController extends Controller
     public function userResetPassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email'         => 'required|email|max:255'
+            'email'         => 'required|email|max:255',
+            'company_id'    => 'required|without_spaces|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -99,30 +125,50 @@ class AuthController extends Controller
 
         $check  = User::where([["email",$request->email],["status","active"]])->first();
         if($check){
-            $subject    = 'ICDX GROUP ACCOUNTING & BUDGETING SYSTEM - Reset Password';
-            $emails     = [
-                array(
-                    'email' => $check->email,
-                    'name'  => $check->name,
-                    'type'  => 'to'
-                ),
-            ];
-            
-            $link       =  env('FRONT_URL')."/reset-password/{$check->email}/{$check->token}";
 
+            $check2  = UserCompany::where([["user_id",$check->user_id],["company_id",$request->company_id]])->first();
+            if($check2){
 
-            Mail::to($emails)->send(new ForgotPasswordNotification($subject,$check,$link));
+                $subject    = 'ICDX GROUP ACCOUNTING & BUDGETING SYSTEM - Reset Password';
+                $emails     = [
+                    array(
+                        'email' => $check->email,
+                        'name'  => $check->name,
+                        'type'  => 'to'
+                    ),
+                ];
+                
+                $link       =  env('FRONT_URL')."/reset-password/{$check->email}/{$check->token}";
+    
+    
+                Mail::to($emails)->send(new ForgotPasswordNotification($subject,$check,$link));
+    
+                return response()
+                ->json(['status'=>200 ,'datas' =>["messages" => "Successfully send to your email"], 'errors' => null])
+                ->withHeaders([
+                    'Content-Type'          => 'application/json',
+                ])
+                ->setStatusCode(200);
 
-            return response()
-            ->json(['status'=>200 ,'datas' =>["messages" => "Successfully send to your email"], 'errors' => null])
-            ->withHeaders([
-                'Content-Type'          => 'application/json',
-            ])
-            ->setStatusCode(200);
+            }else{
+
+                $message = trans("translate.companyDoesNotExist");
+                $errors = [
+                    "company_id"   => [$message]
+                ];
+                return response()
+                ->json(['status'=>422 ,'datas' => null, 'errors' => $errors])
+                ->withHeaders([
+                    'Content-Type'          => 'application/json',
+                ])
+                ->setStatusCode(422);
+            }
+
 
         }else{
+            $message = trans("translate.emailDoesNotExist");
             $errors = [
-                "email"   => ["Email does not exist"]
+                "email"   => [$message]
             ];
             return response()
             ->json(['status'=>422 ,'datas' => null, 'errors' => $errors])
@@ -152,31 +198,53 @@ class AuthController extends Controller
             ->setStatusCode(422);
         }
 
-        $check  = User::with(["division"])->where([["email",$request->email],["password",sha1($request->password)],["status","active"]])->first();
+        $check  = User::with(["division","user_company.company"])->where([["email",$request->email],["password",sha1($request->password)],["status","active"]])->first();
         if($check){
             $token  = $this->jwt($check);
              
-            User::where("user_id",$check->user_id)->update([
-                "updated_at"    => date("Y-m-d H:i:s")
-            ]);
 
-            $response = [
-                'access_token'  => $token,
-                'refresh_token' => $check->token,
-                'token_type'    => 'bearer',
-                'expires_in'    => time() + (1440*60*7)
-            ];
+            $check2  = UserCompany::where([["user_id",$check->user_id],["company_id",$request->company_id]])->first();
+            if($check2){
 
-            return response()
-            ->json(['status'=>200 ,'datas' => $response, 'errors' => null])
-            ->withHeaders([
-                'Content-Type'          => 'application/json',
-            ])
-            ->setStatusCode(200);
+
+                User::where("user_id",$check->user_id)->update([
+                    "updated_at"    => date("Y-m-d H:i:s")
+                ]);
+    
+                $response = [
+                    'access_token'  => $token,
+                    'refresh_token' => $check->token,
+                    'token_type'    => 'bearer',
+                    'expires_in'    => time() + (1440*60*7)
+                ];
+    
+                return response()
+                ->json(['status'=>200 ,'datas' => $response, 'errors' => null])
+                ->withHeaders([
+                    'Content-Type'          => 'application/json',
+                ])
+                ->setStatusCode(200);
+
+            }else{
+
+                $message = trans("translate.companyDoesNotExist");
+                $errors = [
+                    "company_id"   => [$message]
+                ];
+                return response()
+                ->json(['status'=>422 ,'datas' => null, 'errors' => $errors])
+                ->withHeaders([
+                    'Content-Type'          => 'application/json',
+                ])
+                ->setStatusCode(422);
+
+            }
+            
 
         }else{
+            $message = trans("translate.emailPasswordNotMatch");
             $errors = [
-                "email"   => ["Email / Password not match"]
+                "email"   => [$message]
             ];
             return response()
             ->json(['status'=>422 ,'datas' => null, 'errors' => $errors])

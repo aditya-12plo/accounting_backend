@@ -16,10 +16,12 @@ class CompanyController extends Controller
     }
  
     public function getAll(Request $request){
+      $auth           = $request->auth;
+      $credentials    = $request->credentials;
       $models  = Company::orderBy('company_id', 'DESC')->get();
 
         return response()
-        ->json(['status'=>200 ,'datas' => $models, 'errors' => null])
+        ->json(['status'=>200 ,'datas' => ["data" => $models, "credentials" => $credentials], 'errors' => null])
         ->withHeaders([
           'Content-Type'          => 'application/json',
           ])

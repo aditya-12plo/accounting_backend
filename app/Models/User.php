@@ -36,8 +36,13 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
            ->format('Y-m-d H:i:s');
     }
 
+    public function user_company()
+    {
+        return $this->hasMany('App\Models\UserCompany', 'user_id','user_id');
+    }
+
     public function division()
     {
-        return $this->belongsTo(DivisionMaster::class, 'division_id','division_id');
+        return $this->belongsTo('App\Models\DivisionMaster', 'division_id','division_id');
     }
 }

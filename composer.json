@@ -13,7 +13,8 @@
         "itelmenko/laravel-mysql-logger": "^1.0",
         "laravel/lumen-framework": "^8.3.1",
         "mongodb/mongodb": "^1.5",
-        "phpoffice/phpspreadsheet": "^1.19"
+        "phpoffice/phpspreadsheet": "^1.19",
+        "ramsey/uuid": "^4.2"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",

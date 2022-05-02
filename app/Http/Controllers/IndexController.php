@@ -14,8 +14,11 @@ class IndexController extends Controller
     }
 
     public function index(Request $request){ 
+      
+      $message = trans("translate.welcome")." Accounting System By PT. Aplikasi Pemuda Indonesia";
+
         return response()
-        ->json(['status'=>200 ,'datas' => ["message" => "Accounting System By PT. Aplikasi Pemuda Indonesia"], 'errors' => null])
+        ->json(['status'=>200 ,'datas' => ["message" => $message], 'errors' => null])
         ->withHeaders([
           'Content-Type'          => 'application/json',
           ])

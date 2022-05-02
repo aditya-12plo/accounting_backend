@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use App,DB;
 use Firebase\JWT\JWT;
+use Ramsey\Uuid\Uuid;
 use PDF;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -280,7 +281,7 @@ class UserController extends Controller
             "division_id"   => $request->division_id,
             "status"        => $request->status,
             "password"      => sha1($request->password),
-            "token"         => uniqid(),
+            "token"         => Uuid::uuid1(),
             "updated_at"    => date("Y-m-d H:i:s")
         ]);
 

@@ -64,7 +64,7 @@ class DivisionController extends Controller
         }
 
         return response()
-        ->json(['status'=>200 ,'datas' => $response, 'errors' => null])
+        ->json(['status'=>200 ,'datas' => ["data" => $response, "credentials" => $credentials], 'errors' => null])
         ->withHeaders([
             'Content-Type'          => 'application/json',
         ])
