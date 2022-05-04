@@ -18,6 +18,8 @@ use PhpOffice\PhpSpreadsheet\Writer\Xls;
 use App\Models\Log;
 use App\Models\User;
 use App\Models\Company;
+use App\Models\DivisionMaster;
+use App\Models\UserCompany;
 
 class UserController extends Controller
 { 
@@ -79,7 +81,8 @@ class UserController extends Controller
         $level     				= $request->level;
         $status   				= $request->status;
         $division_name          = $request->division_name;
-        $division_code          = $request->division_code;
+        $division_id            = $request->division_id;
+        $download               = $request->download;
 		
         if(!$sort_field){
             $sort_field = "user_id";
@@ -117,11 +120,9 @@ class UserController extends Controller
         }
 		
 		
-		if ($division_code) {
-            $like = "%{$division_code}%";
-            $query = $query->whereHas('division', function($q) use($like){
-                $q->where('code', 'LIKE', $like);
-            });
+		if ($division_id) {
+            $like = "%{$division_id}%";
+            $query = $query->where('division_id', 'LIKE', $like);
         }
 		
 		
@@ -129,243 +130,32 @@ class UserController extends Controller
             $query = $query->where('status', $status);
         }
 		 
-
-		$response = $query->paginate($perPage);
-
-        return response()
-        ->json(['status'=>200 ,'datas' => ["data" => $response, "credentials" => $credentials], 'errors' => null])
-        ->withHeaders([
-            'Content-Type'          => 'application/json',
-        ])
-        ->setStatusCode(200);
-    }
-
-
-    public function updateStatus(Request $request,$user_id)
-    {
-        $auth           = $request->auth;
-        $credentials    = $request->credentials;
-
-        $validator = Validator::make($request->all(), [
-            'status'         => 'required|in:active,deactived',
-        ]);
-
-        if ($validator->fails()) {
-            return response()
-            ->json(['status'=>422 ,'datas' => null, 'errors' => $validator->errors()])
-            ->withHeaders([
-                'Content-Type'          => 'application/json',
-            ])
-            ->setStatusCode(422);
-        }
-
-        User::where("user_id",$user_id)->update(["status" => $request->status,"updated_at" => date("Y-m-d H:i:s")]);
-        return response()
-        ->json(['status'=>200 ,'datas' => ["messages" => "Successfully" , "credentials" => $credentials], 'errors' => null])
-        ->withHeaders([
-            'Content-Type'          => 'application/json',
-        ])
-        ->setStatusCode(200);
-
-    }
-
-    public function detail(Request $request,$user_id)
-    {
-        $auth           = $request->auth;
-        $credentials    = $request->credentials;
-
-        $check = User::with(["division"])->where("user_id",$user_id)->first();
-
-        return response()
-        ->json(['status'=>200 ,'datas' => ["data" => $check , "credentials" => $credentials], 'errors' => null])
-        ->withHeaders([
-            'Content-Type'          => 'application/json',
-        ])
-        ->setStatusCode(200);
-
-    }
-
-
-    public function update(Request $request,$user_id)
-    {
-        $auth           = $request->auth;
-        $credentials    = $request->credentials;
-
-        $validator = Validator::make($request->all(), [
-            'name'              => 'required|max:255',
-            'email'             => 'required|max:255|without_spaces|email|unique:user,email,'.$user_id.',user_id',
-            'division_id'       => 'required|integer', 
-            'status'            => 'required|in:active,deactived',
-        ]);
-
-        if ($validator->fails()) {
-            return response()
-            ->json(['status'=>422 ,'datas' => null, 'errors' => $validator->errors()])
-            ->withHeaders([
-                'Content-Type'          => 'application/json',
-            ])
-            ->setStatusCode(422);
-        }
-
-        $model  = User::where("user_id",$user_id)->first();
-        if($model){
-            if($request->password){
-
-                User::where("user_id",$user_id)->update([
-                    "name"          => $request->name,
-                    "email"         => $request->email,
-                    "division_id"   => $request->division_id,
-                    "status"        => $request->status,
-                    "password"      => sha1($request->password),
-                    "updated_at"    => date("Y-m-d H:i:s")
-                ]);
-
-            }else{
-
-                User::where("user_id",$user_id)->update([
-                    "name"          => $request->name,
-                    "email"         => $request->email,
-                    "division_id"   => $request->division_id,
-                    "status"        => $request->status,
-                    "updated_at"    => date("Y-m-d H:i:s")
-                ]);
-                
-            }
-
-            return response()
-            ->json(['status'=>200 ,'datas' => ["messages" => "Successfully", "credentials" => $credentials], 'errors' => null])
-            ->withHeaders([
-                'Content-Type'          => 'application/json',
-            ])
-            ->setStatusCode(200);
-
+        if($download == "download"){
+            $response    = $query->get();
+            return $this->downloadData($response);
         }else{
 
+            $response = $query->paginate($perPage);
+
             return response()
-            ->json(['status'=>422 ,'datas' => null, 'errors' => ["user_id" => "user id These credentials do not match our records"]])
-            ->withHeaders([
-                'Content-Type'          => 'application/json',
-            ])
-            ->setStatusCode(422);
-
-        }
-        
-
-    }
-
-    public function create(Request $request)
-    {
-        $auth           = $request->auth;
-        $credentials    = $request->credentials;
-
-        $validator = Validator::make($request->all(), [
-            'name'              => 'required|max:255',
-            'password'          => 'required|max:255',
-            'email'             => 'required|max:255|without_spaces|email|unique:user,email',
-            'division_id'       => 'required|integer', 
-            'status'            => 'required|in:active,deactived',
-        ]);
-
-        if ($validator->fails()) {
-            return response()
-            ->json(['status'=>422 ,'datas' => null, 'errors' => $validator->errors()])
-            ->withHeaders([
-                'Content-Type'          => 'application/json',
-            ])
-            ->setStatusCode(422);
-        }
-
-        User::create([
-            "name"          => $request->name,
-            "email"         => $request->email,
-            "division_id"   => $request->division_id,
-            "status"        => $request->status,
-            "password"      => sha1($request->password),
-            "token"         => Uuid::uuid1(),
-            "updated_at"    => date("Y-m-d H:i:s")
-        ]);
-
-        return response()
-            ->json(['status'=>200 ,'datas' => ["messages" => "Successfully", "credentials" => $credentials], 'errors' => null])
+            ->json(['status'=>200 ,'datas' => ["data" => $response, "credentials" => $credentials], 'errors' => null])
             ->withHeaders([
                 'Content-Type'          => 'application/json',
             ])
             ->setStatusCode(200);
-
+        }
+        
     }
 
 
-    public function download(Request $request){
-        $auth                   = $request->auth;
+    private function downloadData($datas){
+        set_time_limit(0);
+        error_reporting(0);
+        ini_set('memory_limit', '-1');
+        ini_set('max_execution_time', 0); 
 
-        if($auth->level != "ROOT"){
-            return response()
-            ->json(['status'=>404 ,'datas' => null, 'errors' => null])
-            ->withHeaders([
-                'Content-Type'          => 'application/json',
-            ])
-            ->setStatusCode(404);
-        }
- 
-        $sort_field     		= $request->sort_field;
-        $sort_type      		= $request->sort_type;
-		$file_name				= $request->file_name;
-		
-        $name     				= $request->name;
-        $email     				= $request->email;
-        $level     				= $request->level;
-        $status   				= $request->status;
-        $division_name          = $request->division_name;
-        $division_code          = $request->division_code;
-		
-        if(!$sort_field){
-            $sort_field = "user_id";
-            $sort_type  = "DESC";
-        } 
-        
-		$query = User::with(["division"])->orderBy($sort_field,$sort_type);
-		
-		if ($name) {
-            $like = "%{$name}%";
-            $query = $query->where('name', 'LIKE', $like);
-        }
-		
-		if ($email) {
-            $like = "%{$email}%";
-            $query = $query->where('email', 'LIKE', $like);
-        }
-		
-		
-		if ($level) {
-            $like = "%{$level}%";
-            $query = $query->where('level', 'LIKE', $like);
-        }
-		
-		
-		if ($division_name) {
-            $like = "%{$division_name}%";
-            $query = $query->whereHas('division', function($q) use($like){
-                $q->where('name', 'LIKE', $like);
-            });
-        }
-		
-		
-		if ($division_code) {
-            $like = "%{$division_code}%";
-            $query = $query->whereHas('division', function($q) use($like){
-                $q->where('code', 'LIKE', $like);
-            });
-        }
-		
-		
-		if ($status) {
-            $query = $query->where('status', $status);
-        }
-		 
-
-		$datas	= $query->get();
-
-		$file_path  	= storage_path('xlsx/download') . '/' . $file_name;
+        $file_name      = uniqid().".xlsx";
+		$file_path  	= storage_path('download') . '/' . $file_name;
 
 		$spreadsheet 	= new Spreadsheet();
 		$sheet 			= $spreadsheet->getActiveSheet();
@@ -413,6 +203,263 @@ class UserController extends Controller
 		}
 
     }
+
+    public function updateStatus(Request $request,$user_id)
+    {
+        $auth           = $request->auth;
+        $credentials    = $request->credentials;
+        
+        if($auth->level != "ROOT"){
+            return response()
+            ->json(['status'=>404 ,'datas' => null, 'errors' => null])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'status'         => 'required|in:active,deactived',
+        ]);
+
+        if ($validator->fails()) {
+            return response()
+            ->json(['status'=>422 ,'datas' => null, 'errors' => $validator->errors()])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(422);
+        }
+
+        User::where("user_id",$user_id)->update(["status" => $request->status,"updated_at" => date("Y-m-d H:i:s")]);
+        $message = trans("translate.Successfully");
+        return response()
+        ->json(['status'=>200 ,'datas' => ["messages" => $message , "credentials" => $credentials], 'errors' => null])
+        ->withHeaders([
+            'Content-Type'          => 'application/json',
+        ])
+        ->setStatusCode(200);
+
+    }
+
+    public function detail(Request $request,$user_id)
+    {
+        $auth           = $request->auth;
+        $credentials    = $request->credentials;
+
+        if($auth->level != "ROOT"){
+            return response()
+            ->json(['status'=>404 ,'datas' => null, 'errors' => null])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(404);
+        }
+
+        $check = User::with(["division","user_company.company"])->where("user_id",$user_id)->first();
+
+        return response()
+        ->json(['status'=>200 ,'datas' => ["data" => $check , "credentials" => $credentials], 'errors' => null])
+        ->withHeaders([
+            'Content-Type'          => 'application/json',
+        ])
+        ->setStatusCode(200);
+
+    }
+
+
+    public function update(Request $request,$user_id)
+    {
+        $auth           = $request->auth;
+        $credentials    = $request->credentials;
+
+        if($auth->level != "ROOT"){
+            return response()
+            ->json(['status'=>404 ,'datas' => null, 'errors' => null])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'name'              => 'required|max:255',
+            'email'             => 'required|max:255|without_spaces|email|unique:user,email,'.$user_id.',user_id',
+            'division_id'       => 'required|max:255', 
+            'status'            => 'required|in:active,deactived',
+            'level'             => 'required|in:STAFF,ROOT',
+            'company_ids'       => 'required|array|min:1', 
+        ]);
+
+        if ($validator->fails()) {
+            return response()
+            ->json(['status'=>422 ,'datas' => null, 'errors' => $validator->errors()])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(422);
+        }
+
+        $model  = User::where("user_id",$user_id)->first();
+        if($model){
+
+            $checkDivisionMaster = DivisionMaster::where("division_id",$request->division_id)->first();
+            if($checkDivisionMaster){
+
+                if($request->password){
+
+                    User::where("user_id",$user_id)->update([
+                        "name"          => $request->name,
+                        "email"         => $request->email,
+                        "division_id"   => $checkDivisionMaster->division_id,
+                        "status"        => $request->status,
+                        "password"      => sha1($request->password),
+                        "updated_at"    => date("Y-m-d H:i:s")
+                    ]);
+    
+                }else{
+    
+                    User::where("user_id",$user_id)->update([
+                        "name"          => $request->name,
+                        "email"         => $request->email,
+                        "division_id"   => $checkDivisionMaster->division_id,
+                        "status"        => $request->status,
+                        "updated_at"    => date("Y-m-d H:i:s")
+                    ]);
+                    
+                }
+
+
+                UserCompany::where('user_id', $user_id)->delete();
+    
+                $companys = $request->company_ids;
+
+                for($x=0;$x<count($companys);$x++){
+                    $UserCompany                = new UserCompany;
+                    $UserCompany->user_id       = $user_id;                
+                    $UserCompany->company_id    = $companys[$x];                
+                    $UserCompany->save();
+                }
+
+
+                $message = trans("translate.Successfully");
+                return response()
+                ->json(['status'=>200 ,'datas' => ["messages" => $message, "credentials" => $credentials], 'errors' => null])
+                ->withHeaders([
+                    'Content-Type'          => 'application/json',
+                ])
+                ->setStatusCode(200);
+
+            }else{
+                $message = trans("translate.Divisionotmatchrecords");
+                return response()
+                ->json(['status'=>422 ,'datas' => null, 'errors' => ["division_id" => $message]])
+                ->withHeaders([
+                    'Content-Type'          => 'application/json',
+                ])
+                ->setStatusCode(422);
+            }
+
+
+        }else{
+            $message = trans("translate.usercredentialsnotmatchrecords");
+            return response()
+            ->json(['status'=>422 ,'datas' => null, 'errors' => ["user_id" => $message]])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(422);
+
+        }
+        
+
+    }
+
+    public function create(Request $request)
+    {
+        $auth           = $request->auth;
+        $credentials    = $request->credentials;
+
+        if($auth->level != "ROOT"){
+            return response()
+            ->json(['status'=>404 ,'datas' => null, 'errors' => null])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'name'              => 'required|max:255',
+            'password'          => 'required|max:255',
+            'level'             => 'required|in:STAFF,ROOT',
+            'email'             => 'required|max:255|without_spaces|email|unique:user,email',
+            'division_id'       => 'required|max:255', 
+            'company_ids'       => 'required|array|min:1', 
+            'status'            => 'required|in:active,deactived',
+        ]);
+
+        if ($validator->fails()) {
+            return response()
+            ->json(['status'=>422 ,'datas' => null, 'errors' => $validator->errors()])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(422);
+        }
+
+
+        $checkDivisionMaster = DivisionMaster::where("division_id",$request->division_id)->first();
+        if($checkDivisionMaster){
+ 
+
+            $model              = new User();
+            $model->name        = $request->name;
+            $model->level       = $request->level;
+            $model->email       = $request->email;
+            $model->division_id = $checkDivisionMaster->division_id;
+            $model->status      = $request->status;
+            $model->password    = sha1($request->password);
+            $model->token       = Uuid::uuid1();
+            $model->updated_at  = date("Y-m-d H:i:s");
+            $model->save();
+
+            $insertedId    = $model->user_id;
+
+            UserCompany::where('user_id', $insertedId)->delete();
+            
+            $companys = $request->company_ids;
+
+            for($x=0;$x<count($companys);$x++){
+                $UserCompany                = new UserCompany;
+                $UserCompany->user_id       = $insertedId;                
+                $UserCompany->company_id    = $companys[$x];                
+                $UserCompany->save();
+            }
+    
+            $message = trans("translate.Successfully");
+            return response()
+                ->json(['status'=>200 ,'datas' => ["messages" => $message, "credentials" => $credentials], 'errors' => null])
+                ->withHeaders([
+                    'Content-Type'          => 'application/json',
+                ])
+                ->setStatusCode(200);
+
+        }else{
+
+            $message = trans("translate.Divisionotmatchrecords");
+            return response()
+            ->json(['status'=>422 ,'datas' => null, 'errors' => ["division_id" => $message]])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(422);
+
+        }
+
+
+    }
+ 
 
 
 }

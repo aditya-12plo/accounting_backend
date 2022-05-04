@@ -143,8 +143,9 @@ class AuthController extends Controller
     
                 Mail::to($emails)->send(new ForgotPasswordNotification($subject,$check,$link));
     
+                $message = trans("translate.SuccessfullyToYourEmail");
                 return response()
-                ->json(['status'=>200 ,'datas' =>["messages" => "Successfully send to your email"], 'errors' => null])
+                ->json(['status'=>200 ,'datas' =>["messages" => $message], 'errors' => null])
                 ->withHeaders([
                     'Content-Type'          => 'application/json',
                 ])

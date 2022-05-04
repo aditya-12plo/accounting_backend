@@ -15,7 +15,7 @@ class CompanyController extends Controller
          
     }
  
-    public function getAll(Request $request){
+    public function getAllData(Request $request){
       $auth           = $request->auth;
       $credentials    = $request->credentials;
       $models  = Company::orderBy('company_id', 'DESC')->get();

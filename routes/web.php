@@ -40,11 +40,11 @@ Route::group([
         Route::get('/user/detail/{user_id}', 'UserController@detail');
         Route::put('/user/update/{user_id}', 'UserController@update');
         Route::post('/user/create', 'UserController@create');
-        Route::post('/user/download', 'UserController@download');
 
 
-        Route::get('/division/index', 'DivisionController@index');
+        Route::get('/division/all', 'DivisionController@getAllData');
         
+        Route::get('/company/all', 'CompanyController@getAllData');
     });
 
 
