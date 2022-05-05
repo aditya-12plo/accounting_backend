@@ -7,6 +7,7 @@ return [
 	'companyDoesNotExist' => 'Kode Perusahaan tidak terdaftar',
 	'SuccessfullyToYourEmail' => 'Berhasil Dikirimkan Ke Email Anda',
 	'Successfully' => 'Sukses',
-	'usercredentialsnotmatchrecords' => 'id pengguna Kredensial ini tidak cocok dengan catatan kami',
-	'Divisionotmatchrecords' => 'id divisi Kredensial ini tidak cocok dengan catatan kami',
+	'usercredentialsnotmatchrecords' => 'id pengguna ini tidak cocok dengan catatan kami',
+	'Divisionotmatchrecords' => 'id divisi ini tidak cocok dengan catatan kami',
+	'companycredentialsnotmatchrecords' => 'id perusahaan ini tidak cocok dengan catatan kami',
 ];

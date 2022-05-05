@@ -34,17 +34,36 @@ Route::group([
         Route::get('/dashboard', 'AuthController@index');
         Route::get('/profile', 'AuthController@profile');
 
-        Route::post('/user/change-password', 'UserController@changePassword');
-        Route::get('/user/index', 'UserController@index');
-        Route::put('/user/update-status/{user_id}', 'UserController@updateStatus');
-        Route::get('/user/detail/{user_id}', 'UserController@detail');
-        Route::put('/user/update/{user_id}', 'UserController@update');
-        Route::post('/user/create', 'UserController@create');
+        $router->group([
+            'prefix' => 'user'
+    
+        ], function ($router) {
+
+            Route::post('/change-password', 'UserController@changePassword');
+            Route::get('/index', 'UserController@index');
+            Route::put('/update-status/{user_id}', 'UserController@updateStatus');
+            Route::get('/detail/{user_id}', 'UserController@detail');
+            Route::put('/update/{user_id}', 'UserController@update');
+            Route::post('/create', 'UserController@create');   
+    
+        });
+
+        $router->group([
+            'prefix' => 'company'
+    
+        ], function ($router) {
+
+            Route::get('/all', 'CompanyController@getAllData');
+            Route::get('/index', 'CompanyController@index');
+            Route::get('/detail/{company_id}', 'CompanyController@detail');
+            Route::put('/update/{company_id}', 'CompanyController@update');
+            Route::post('/create', 'CompanyController@create');   
+    
+        });
 
 
         Route::get('/division/all', 'DivisionController@getAllData');
         
-        Route::get('/company/all', 'CompanyController@getAllData');
     });
 
 

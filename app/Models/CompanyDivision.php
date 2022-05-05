@@ -4,16 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Company extends Model
+class CompanyDivision extends Model
 {
-    protected $table        = 'company';
-    protected $primaryKey   = 'company_id';
-    public $incrementing    = false;
-    protected $keyType      = 'string';
+    protected $table        = 'company_division';
+    protected $primaryKey   = 'company_division_id';
     protected $fillable     = array(
-        'name'
+        'company_id',"division_id"
     );
-    public $timestamps = true; 
+    public $timestamps = false; 
 	 
     public function getCreatedAtAttribute()
     {
@@ -27,11 +25,15 @@ class Company extends Model
     }
 
 
-    public function division_company()
+    public function division()
     {
-        return $this->hasMany('App\Models\CompanyDivision', 'company_id','company_id');
+        return $this->belongsTo('App\Models\DivisionMaster', 'division_id','division_id');
     }
 
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company', 'company_id','company_id');
+    }
 
 
 }

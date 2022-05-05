@@ -7,6 +7,7 @@ return [
 	'companyDoesNotExist' => 'Company Id  does not exist',
 	'SuccessfullyToYourEmail' => 'Successfully send to your email',
 	'Successfully' => 'Successfully',
-	'usercredentialsnotmatchrecords' => 'user id These credentials do not match our records',
-	'Divisionotmatchrecords' => 'division id These credentials do not match our records',
+	'usercredentialsnotmatchrecords' => 'user id These do not match our records',
+	'Divisionotmatchrecords' => 'division id These do not match our records',
+	'companycredentialsnotmatchrecords' => 'company id These do not match our records',
 ];
