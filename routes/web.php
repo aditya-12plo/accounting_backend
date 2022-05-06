@@ -62,7 +62,19 @@ Route::group([
         });
 
 
-        Route::get('/division/all', 'DivisionController@getAllData');
+        $router->group([
+            'prefix' => 'division'
+    
+        ], function ($router) {
+
+            Route::get('/all', 'DivisionController@getAllData');
+            Route::get('/index', 'DivisionController@index');
+            Route::get('/detail/{division_id}', 'DivisionController@detail');
+            Route::put('/update/{division_id}', 'DivisionController@update');
+            Route::post('/create', 'DivisionController@create');   
+    
+        });
+ 
         
     });
 

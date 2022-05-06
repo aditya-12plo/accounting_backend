@@ -10,4 +10,5 @@ return [
 	'usercredentialsnotmatchrecords' => 'user id These do not match our records',
 	'Divisionotmatchrecords' => 'division id These do not match our records',
 	'companycredentialsnotmatchrecords' => 'company id These do not match our records',
+	'divisioncredentialsnotmatchrecords' => 'division id These do not match our records',
 ];
