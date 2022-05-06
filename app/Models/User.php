@@ -16,7 +16,7 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     protected $table = 'user';
     protected $primaryKey = 'user_id';
     protected $fillable = [
-        'division_id','name', 'email','token','status','company_id','level'
+        'division_id','name', 'email','token','status','company_id','level','signature_file'
     ];
  
     protected $hidden = [

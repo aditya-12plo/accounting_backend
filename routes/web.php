@@ -43,7 +43,7 @@ Route::group([
             Route::get('/index', 'UserController@index');
             Route::put('/update-status/{user_id}', 'UserController@updateStatus');
             Route::get('/detail/{user_id}', 'UserController@detail');
-            Route::put('/update/{user_id}', 'UserController@update');
+            Route::post('/update/{user_id}', 'UserController@update');
             Route::post('/create', 'UserController@create');   
     
         });

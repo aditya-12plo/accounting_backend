@@ -288,12 +288,23 @@ class UserController extends Controller
             'division_id'       => 'required|max:255', 
             'status'            => 'required|in:active,deactived',
             'level'             => 'required|in:STAFF,ROOT',
-            'company_ids'       => 'required|array|min:1', 
+            'company_ids'       => 'required', 
+            'signature_file'    => 'mimes:jpeg,jpg,png|max:20000' // max 20000 kb
         ]);
 
         if ($validator->fails()) {
             return response()
             ->json(['status'=>422 ,'datas' => null, 'errors' => $validator->errors()])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(422);
+        }
+
+        $json_decode = @json_decode(@$request->company_ids);
+        if (!$json_decode) {
+            return response()
+            ->json(['status'=>422 ,'datas' => null, 'errors' => ["company_ids" => ["The company ids must be an array."]]])
             ->withHeaders([
                 'Content-Type'          => 'application/json',
             ])
@@ -329,16 +340,38 @@ class UserController extends Controller
                     
                 }
 
+                if($request->signature_file){
+                    
+                    if($model->signature_file){
+                        $file_path = 'signature/'.$model->signature_file;
+                        unlink($file_path);
+                    }
+
+ 
+                    $file       = $request->file('signature_file');
+                    $extension  = $file->getClientOriginalExtension();
+                    $imageName  = uniqid()."-".time().'.'.$extension;
+        
+                    $file->move('signature/', $imageName);
+
+                    User::where("user_id",$user_id)->update([
+                        "signature_file"          => $imageName
+                    ]);
+                }
+
 
                 UserCompany::where('user_id', $user_id)->delete();
     
-                $companys = $request->company_ids;
+                $companys = $json_decode;
 
                 for($x=0;$x<count($companys);$x++){
-                    $UserCompany                = new UserCompany;
-                    $UserCompany->user_id       = $user_id;                
-                    $UserCompany->company_id    = $companys[$x];                
-                    $UserCompany->save();
+                    $checkCompany   = Company::where("company_id",$companys[$x])->first();
+                    if($checkCompany){
+                        $UserCompany                = new UserCompany;
+                        $UserCompany->user_id       = $user_id;                
+                        $UserCompany->company_id    = $checkCompany->company_id;                
+                        $UserCompany->save();
+                    }
                 }
 
 
@@ -395,8 +428,9 @@ class UserController extends Controller
             'level'             => 'required|in:STAFF,ROOT',
             'email'             => 'required|max:255|without_spaces|email|unique:user,email',
             'division_id'       => 'required|max:255', 
-            'company_ids'       => 'required|array|min:1', 
+            'company_ids'       => 'required', 
             'status'            => 'required|in:active,deactived',
+            'signature_file'    => 'required|mimes:jpeg,jpg,png|max:20000' // max 20000 kb
         ]);
 
         if ($validator->fails()) {
@@ -408,10 +442,25 @@ class UserController extends Controller
             ->setStatusCode(422);
         }
 
+        $json_decode = @json_decode(@$request->company_ids);
+        if (!$json_decode) {
+            return response()
+            ->json(['status'=>422 ,'datas' => null, 'errors' => ["company_ids" => ["The company ids must be an array."]]])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(422);
+        }
 
         $checkDivisionMaster = DivisionMaster::where("division_id",$request->division_id)->first();
         if($checkDivisionMaster){
  
+            $file       = $request->file('signature_file');
+            $extension  = $file->getClientOriginalExtension();
+            $imageName  = uniqid()."-".time().'.'.$extension;
+
+            $file->move('signature/', $imageName);
+
 
             $model              = new User();
             $model->name        = $request->name;
@@ -420,6 +469,7 @@ class UserController extends Controller
             $model->division_id = $checkDivisionMaster->division_id;
             $model->status      = $request->status;
             $model->password    = sha1($request->password);
+            $model->signature_file  = $imageName;
             $model->token       = Uuid::uuid1();
             $model->updated_at  = date("Y-m-d H:i:s");
             $model->save();
@@ -428,15 +478,22 @@ class UserController extends Controller
 
             UserCompany::where('user_id', $insertedId)->delete();
             
-            $companys = $request->company_ids;
+            $companys = $json_decode;
 
             for($x=0;$x<count($companys);$x++){
-                $UserCompany                = new UserCompany;
-                $UserCompany->user_id       = $insertedId;                
-                $UserCompany->company_id    = $companys[$x];                
-                $UserCompany->save();
+
+                $checkCompany   = Company::where("company_id",$companys[$x])->first();
+                if($checkCompany){
+                    $UserCompany                = new UserCompany;
+                    $UserCompany->user_id       = $insertedId;                
+                    $UserCompany->company_id    = $checkCompany->company_id;                
+                    $UserCompany->save();
+                }
+                
             }
-    
+
+
+                
             $message = trans("translate.Successfully");
             return response()
                 ->json(['status'=>200 ,'datas' => ["messages" => $message, "credentials" => $credentials], 'errors' => null])
