@@ -74,6 +74,22 @@ Route::group([
             Route::post('/create', 'DivisionController@create');   
     
         });
+
+
+        $router->group([
+            'prefix' => 'vendor'
+    
+        ], function ($router) {
+
+            Route::get('/all', 'VendorController@getAllData');
+            Route::get('/index', 'VendorController@index');
+            Route::get('/detail/{vendor_id}', 'VendorController@detail');
+            Route::put('/update/{vendor_id}', 'VendorController@update');
+            Route::post('/create', 'VendorController@create');   
+            Route::get('/download-template', 'VendorController@downloadTemplate');
+            Route::post('/upload', 'VendorController@uploadData');   
+    
+        });
  
         
     });

@@ -11,4 +11,5 @@ return [
 	'Divisionotmatchrecords' => 'id divisi ini tidak cocok dengan catatan kami',
 	'companycredentialsnotmatchrecords' => 'id perusahaan ini tidak cocok dengan catatan kami',
 	'divisioncredentialsnotmatchrecords' => 'id divisi ini tidak cocok dengan catatan kami',
+	'vendorcredentialsnotmatchrecords' => 'id vendor ini tidak cocok dengan catatan kami',
 ];
