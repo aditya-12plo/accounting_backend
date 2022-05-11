@@ -41,6 +41,7 @@ Route::group([
 
             Route::post('/change-password', 'UserController@changePassword');
             Route::get('/index', 'UserController@index');
+            Route::get('/company', 'UserController@userCompany');
             Route::put('/update-status/{user_id}', 'UserController@updateStatus');
             Route::get('/detail/{user_id}', 'UserController@detail');
             Route::post('/update/{user_id}', 'UserController@update');

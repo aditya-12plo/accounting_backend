@@ -12,4 +12,7 @@ return [
 	'companycredentialsnotmatchrecords' => 'company id These do not match our records',
 	'divisioncredentialsnotmatchrecords' => 'division id These do not match our records',
 	'vendorcredentialsnotmatchrecords' => 'vendor id These do not match our records',
+	'ProvidedTokenexpired'	=> 'Provided token is expired',
+	'tokendecoding'			=> 'An error while decoding token',
+	'tokenprovided'			=> 'Token not provided',
 ];

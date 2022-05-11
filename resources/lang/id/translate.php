@@ -12,4 +12,7 @@ return [
 	'companycredentialsnotmatchrecords' => 'id perusahaan ini tidak cocok dengan catatan kami',
 	'divisioncredentialsnotmatchrecords' => 'id divisi ini tidak cocok dengan catatan kami',
 	'vendorcredentialsnotmatchrecords' => 'id vendor ini tidak cocok dengan catatan kami',
+	'ProvidedTokenexpired'	=> 'Masa token ada telah berakhir',
+	'tokendecoding'			=> 'Token gagal di ektrak',
+	'tokenprovided'			=> 'Token anda salah',
 ];

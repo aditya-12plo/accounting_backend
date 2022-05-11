@@ -15,8 +15,9 @@ class JwtMiddleware
         if(!$token) {
             // Unauthorized response if token not there
 			
+			$message = trans("translate.tokenprovided");
 			return response()
-				->json(['status'=>401 ,'datas' => null, 'errors' => ['message' => ["Token not provided."]]])
+				->json(['status'=>401 ,'datas' => null, 'errors' => ['message' => [$message]]])
 				->withHeaders([
 				  'Content-Type'          => 'application/json',
 				  ])
@@ -25,15 +26,17 @@ class JwtMiddleware
         try {
             $credentials = JWT::decode($token, env('JWT_SECRET'), ['HS256']);
         } catch(ExpiredException $e) {
+			$message = trans("translate.ProvidedTokenexpired");
 			return response()
-				->json(['status'=>401 ,'datas' => null, 'errors' => ['message' => ["Provided token is expired."]]])
+				->json(['status'=>401 ,'datas' => null, 'errors' => ['message' => [$message]]])
 				->withHeaders([
 				  'Content-Type'          => 'application/json',
 				  ])
 				->setStatusCode(401);
         } catch(Exception $e) {
+			$message = trans("translate.tokendecoding");
 			return response()
-				->json(['status'=>401 ,'datas' => null, 'errors' => ['message' => ["An error while decoding token."]]])
+				->json(['status'=>401 ,'datas' => null, 'errors' => ['message' => [$message]]])
 				->withHeaders([
 				  'Content-Type'          => 'application/json',
 				  ])
@@ -56,8 +59,9 @@ class JwtMiddleware
 				$request->credentials 				= ["access_token" => $getNewToken, "refresh_token" => $credentials->sub->token];
 			}else{
 				
+				$message = trans("translate.ProvidedTokenexpired");
 				return response()
-				->json(['status'=>401 ,'datas' => null, 'errors' => ['message' => ["Provided token is expired."]]])
+				->json(['status'=>401 ,'datas' => null, 'errors' => ['message' => [$message]]])
 				->withHeaders([
 				'Content-Type'          => 'application/json',
 				])

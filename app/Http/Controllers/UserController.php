@@ -519,4 +519,19 @@ class UserController extends Controller
  
 
 
+    public function userCompany(Request $request)
+    {
+        $auth               = $request->auth;
+        $credentials        = $request->credentials;
+
+        $user_company       = $auth->user_company;
+        return response()
+        ->json(['status'=>200 ,'datas' =>["data" => $user_company, "credentials" => $credentials], 'errors' => null])
+        ->withHeaders([
+          'Content-Type'          => 'application/json',
+          ])
+        ->setStatusCode(200);
+
+    }
+
 }
