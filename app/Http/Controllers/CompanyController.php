@@ -247,7 +247,7 @@ class CompanyController extends Controller
       }else{
           $message = trans("translate.companycredentialsnotmatchrecords");
           return response()
-          ->json(['status'=>404 ,'datas' => null, 'errors' => ["company_id" => $message]])
+          ->json(['status'=>404 ,'datas' => null, 'errors' => ["company_id" => [$message]]])
           ->withHeaders([
               'Content-Type'          => 'application/json',
           ])
@@ -326,7 +326,7 @@ class CompanyController extends Controller
       }else{
           $message = trans("translate.companycredentialsnotmatchrecords");
           return response()
-          ->json(['status'=>404 ,'datas' => null, 'errors' => ["company_id" => $message]])
+          ->json(['status'=>404 ,'datas' => null, 'errors' => ["company_id" => [$message]]])
           ->withHeaders([
               'Content-Type'          => 'application/json',
           ])

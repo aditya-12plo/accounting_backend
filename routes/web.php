@@ -92,6 +92,75 @@ Route::group([
     
         });
  
+
+
+        $router->group([
+            'prefix' => 'system-code'
+    
+        ], function ($router) {
+
+            Route::get('/get-all-by-system-code', 'SystemCodeController@getDataBySystemCode');
+            Route::get('/index', 'SystemCodeController@index');
+            Route::get('/detail/{system_code_id}', 'SystemCodeController@detail');
+            Route::put('/update/{system_code_id}', 'SystemCodeController@update');
+            Route::delete('/destroy/{system_code_id}', 'SystemCodeController@destroy');
+            Route::post('/create', 'SystemCodeController@create');   
+            Route::get('/download-template', 'SystemCodeController@downloadTemplate');
+            Route::post('/upload', 'SystemCodeController@uploadData');   
+    
+        });
+ 
+
+
+        $router->group([
+            'prefix' => 'budget-year'
+    
+        ], function ($router) {
+
+            Route::get('/index', 'BudgetAccountYearController@index');
+            Route::get('/detail/{budget_year_id}', 'BudgetAccountYearController@detail');
+            Route::get('/download-data-detail/{budget_year_id}', 'BudgetAccountYearController@downloadDataDetail');
+            Route::put('/update/{budget_year_id}', 'BudgetAccountYearController@update');
+            Route::post('/create', 'BudgetAccountYearController@create');  
+    
+        });
+ 
+
+
+        $router->group([
+            'prefix' => 'budget-header'
+    
+        ], function ($router) {
+
+            Route::get('/index/{budget_year_id}', 'BudgetAccountHeaderController@index');
+            Route::get('/detail/{budget_account_header_id}', 'BudgetAccountHeaderController@detail');
+            Route::get('/download-data-detail/{budget_account_header_id}', 'BudgetAccountHeaderController@downloadDataDetail');
+            Route::put('/update/{budget_account_header_id}', 'BudgetAccountHeaderController@update');
+            Route::delete('/destroy/{budget_account_header_id}', 'BudgetAccountHeaderController@destroy');
+            Route::post('/create/{budget_year_id}', 'BudgetAccountHeaderController@create');  
+            Route::get('/download-template', 'BudgetAccountHeaderController@downloadTemplate');
+            Route::post('/upload/{budget_year_id}', 'BudgetAccountHeaderController@uploadData');   
+    
+        });
+ 
+
+
+        $router->group([
+            'prefix' => 'budget-details'
+    
+        ], function ($router) {
+
+            Route::get('/index/{budget_account_header_id}', 'BudgetAccountDetailsController@index');
+            Route::get('/detail/{budget_account_detail_id}', 'BudgetAccountDetailsController@detail');
+            Route::post('/create/{budget_account_header_id}', 'BudgetAccountDetailsController@create');  
+            Route::put('/update/{budget_account_detail_id}', 'BudgetAccountDetailsController@update');
+            Route::delete('/destroy/{budget_account_detail_id}', 'BudgetAccountDetailsController@destroy');
+            Route::get('/download-template', 'BudgetAccountDetailsController@downloadTemplate');
+            Route::post('/upload/{budget_account_header_id}', 'BudgetAccountDetailsController@uploadData');   
+    
+        });
+
+
         
     });
 

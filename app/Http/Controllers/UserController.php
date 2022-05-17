@@ -386,7 +386,7 @@ class UserController extends Controller
             }else{
                 $message = trans("translate.Divisionotmatchrecords");
                 return response()
-                ->json(['status'=>422 ,'datas' => null, 'errors' => ["division_id" => $message]])
+                ->json(['status'=>422 ,'datas' => null, 'errors' => ["division_id" => [$message]]])
                 ->withHeaders([
                     'Content-Type'          => 'application/json',
                 ])
@@ -397,7 +397,7 @@ class UserController extends Controller
         }else{
             $message = trans("translate.usercredentialsnotmatchrecords");
             return response()
-            ->json(['status'=>422 ,'datas' => null, 'errors' => ["user_id" => $message]])
+            ->json(['status'=>422 ,'datas' => null, 'errors' => ["user_id" => [$message]]])
             ->withHeaders([
                 'Content-Type'          => 'application/json',
             ])
@@ -506,7 +506,7 @@ class UserController extends Controller
 
             $message = trans("translate.Divisionotmatchrecords");
             return response()
-            ->json(['status'=>422 ,'datas' => null, 'errors' => ["division_id" => $message]])
+            ->json(['status'=>422 ,'datas' => null, 'errors' => ["division_id" => [$message]]])
             ->withHeaders([
                 'Content-Type'          => 'application/json',
             ])

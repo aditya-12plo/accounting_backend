@@ -18,10 +18,10 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use App\Models\Company;
 use App\Models\CompanyDivision;
 use App\Models\DivisionMaster;
-use App\Models\Vendor;
+use App\Models\SystemCode;
 
 
-class VendorController extends Controller
+class SystemCodeController extends Controller
 { 
     public function __construct()
     {
@@ -29,12 +29,27 @@ class VendorController extends Controller
     }
 
 
-    public function getAllData(Request $request){
+    public function getDataBySystemCode(Request $request){
+        
         $auth           = $request->auth;
         $credentials    = $request->credentials;
-        $models  = Vendor::orderBy('vendor_id', 'DESC')->get();
+
+        $validator = Validator::make($request->all(), [
+            'system_code'              => 'required|max:255'
+        ]);
   
-          return response()
+        if ($validator->fails()) {
+            return response()
+            ->json(['status'=>422 ,'datas' => null, 'errors' => $validator->errors()])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(422);
+        }
+
+        $models  = SystemCode::where('system_code',$request->system_code)->orderBy('system_code_id', 'DESC')->get();
+  
+        return response()
           ->json(['status'=>200 ,'datas' => ["data" => $models, "credentials" => $credentials], 'errors' => null])
           ->withHeaders([
             'Content-Type'          => 'application/json',
@@ -49,17 +64,28 @@ class VendorController extends Controller
         $auth           = $request->auth;
         $credentials    = $request->credentials;
     
+
+        if($auth->level != "ROOT"){
+            return response()
+            ->json(['status'=>404 ,'datas' => null, 'errors' => null])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(404);
+        }
+
         $perPage        		= $request->per_page;
         $sort_field     		= $request->sort_field;
         $sort_type      		= $request->sort_type;
     
-        $name     				= $request->name;
-        $npwp_no 			    = $request->npwp_no;
-        $address 			    = $request->address;
+        $system_code            = $request->system_code;
+        $value                  = $request->value;
+        $create_by              = $request->create_by;
+        $update_by              = $request->update_by;
         $download               = $request->download;
     
         if(!$sort_field){
-            $sort_field = "vendor_id";
+            $sort_field = "system_code_id";
             $sort_type  = "DESC";
         }
   
@@ -67,21 +93,26 @@ class VendorController extends Controller
             $perPage    = 10;
         }
             
-        $query = Vendor::orderBy($sort_field,$sort_type);
+        $query = SystemCode::orderBy($sort_field,$sort_type);
         
-        if ($name) {
-            $like = "%{$name}%";
-            $query = $query->where('name', 'LIKE', $like);
+        if ($system_code) {
+            $like = "%{$system_code}%";
+            $query = $query->where('system_code', 'LIKE', $like);
         }
         
-        if ($address) {
-            $like = "%{$address}%";
-            $query = $query->where('address', 'LIKE', $like);
+        if ($value) {
+            $like = "%{$value}%";
+            $query = $query->where('value', 'LIKE', $like);
         }
         
-        if ($npwp_no) {
-            $like = "%{$npwp_no}%";
-            $query = $query->where('npwp_no', 'LIKE', $like);
+        if ($create_by) {
+            $like = "%{$create_by}%";
+            $query = $query->where('create_by', 'LIKE', $like);
+        }
+        
+        if ($update_by) {
+            $like = "%{$update_by}%";
+            $query = $query->where('update_by', 'LIKE', $like);
         }
         
            
@@ -116,24 +147,26 @@ class VendorController extends Controller
 
         $spreadsheet 	= new Spreadsheet();
         $sheet 			= $spreadsheet->getActiveSheet();
-        $sheet->setCellValue('A1', 'Vendor ID');
-        $sheet->setCellValue('B1', 'Name');
-        $sheet->setCellValue('C1', 'Address');
-        $sheet->setCellValue('D1', 'NPWP No');
-        $sheet->setCellValue('E1', 'Balance');
-        $sheet->setCellValue('F1', 'Created At');
-        $sheet->setCellValue('G1', 'Updated At');
+        $sheet->setCellValue('A1', 'system_code_id');
+        $sheet->setCellValue('B1', 'system_code');
+        $sheet->setCellValue('C1', 'value');
+        $sheet->setCellValue('D1', 'sequence');
+        $sheet->setCellValue('E1', 'create_by');
+        $sheet->setCellValue('F1', 'update_by');
+        $sheet->setCellValue('G1', 'created_at');
+        $sheet->setCellValue('H1', 'updated_at');
 
         if(count($datas) > 0){
             $x=2;
             foreach($datas as $data){
-                $sheet->setCellValue('A'.$x, $data->vendor_id);
-                $sheet->setCellValue('B'.$x, $data->name);
-                $sheet->setCellValue('C'.$x, $data->address);
-                $sheet->setCellValue('D'.$x, $data->npwp_no);
-                $sheet->setCellValue('E'.$x, $data->balance);
-                $sheet->setCellValue('F'.$x, $data->created_at);
-                $sheet->setCellValue('G'.$x, $data->updated_at);
+                $sheet->setCellValue('A'.$x, $data->system_code_id);
+                $sheet->setCellValue('B'.$x, $data->system_code);
+                $sheet->setCellValue('C'.$x, $data->value);
+                $sheet->setCellValue('D'.$x, $data->sequence);
+                $sheet->setCellValue('E'.$x, $data->create_by);
+                $sheet->setCellValue('F'.$x, $data->update_by);
+                $sheet->setCellValue('G'.$x, $data->created_at);
+                $sheet->setCellValue('H'.$x, $data->updated_at);
                         
                 $x++;
             }
@@ -150,7 +183,7 @@ class VendorController extends Controller
             return $res;
         }else{
         return response()
-            ->json(['status'=>500 ,'datas' => null, 'errors' => ['vendor_id' => ['download file error']]])
+            ->json(['status'=>500 ,'datas' => null, 'errors' => ['system_code_id' => 'download file error']])
             ->withHeaders([
                 'Content-Type'          => 'application/json',
                 ])
@@ -164,11 +197,20 @@ class VendorController extends Controller
         $auth           = $request->auth;
         $credentials    = $request->credentials;
     
+
+        if($auth->level != "ROOT"){
+            return response()
+            ->json(['status'=>404 ,'datas' => null, 'errors' => null])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(404);
+        }
+
         $validator = Validator::make($request->all(), [
-            'name'              => 'required|max:255',
-            'npwp_no'           => 'required|max:15|without_spaces|unique:vendor,npwp_no',
-            'address'           => 'required',
-            'balance'           => 'required|numeric',
+            'system_code'       => 'required|max:255|without_spaces',
+            'value'             => 'required|max:255',
+            'sequence'          => 'required|numeric',
         ]);
   
         if ($validator->fails()) {
@@ -180,11 +222,12 @@ class VendorController extends Controller
             ->setStatusCode(422);
         }
    
-        $model              = new Vendor();
-        $model->name        = strtoupper($request->name);
-        $model->address     = strtoupper($request->address);
-        $model->npwp_no     = $request->npwp_no;
-        $model->balance     = $request->balance;
+        $model                  = new SystemCode();
+        $model->system_code     = strtoupper($request->system_code);
+        $model->value           = strtoupper($request->value);
+        $model->sequence        = $request->sequence;
+        $model->create_by       = $auth->name." ( ".$auth->email." )";
+        $model->update_by       = $auth->name." ( ".$auth->email." )";
         $model->save();
    
   
@@ -199,12 +242,23 @@ class VendorController extends Controller
 
 
 
-    public function detail(Request $request,$vendor_id)
+    public function detail(Request $request,$system_code_id)
     {
         $auth           = $request->auth;
         $credentials    = $request->credentials;
   
-        $check = Vendor::where("vendor_id",$vendor_id)->first();
+
+        if($auth->level != "ROOT"){
+            return response()
+            ->json(['status'=>404 ,'datas' => null, 'errors' => null])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(404);
+        }
+
+
+        $check = SystemCode::where("system_code_id",$system_code_id)->first();
         if($check){
    
           return response()
@@ -216,9 +270,9 @@ class VendorController extends Controller
   
         }else{
 
-            $message = trans("translate.vendorcredentialsnotmatchrecords");
+            $message = trans("translate.credentialsnotmatchrecords");
             return response()
-            ->json(['status'=>404 ,'datas' => null, 'errors' => ["vendor_id" => [$message]]])
+            ->json(['status'=>404 ,'datas' => null, 'errors' => ["system_code_id" => [$message]]])
             ->withHeaders([
                 'Content-Type'          => 'application/json',
             ])
@@ -229,16 +283,26 @@ class VendorController extends Controller
     }
 
 
-    public function update(Request $request,$vendor_id)
+    public function update(Request $request,$system_code_id)
     {
         $auth           = $request->auth;
         $credentials    = $request->credentials;
   
+
+        if($auth->level != "ROOT"){
+            return response()
+            ->json(['status'=>404 ,'datas' => null, 'errors' => null])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(404);
+        }
+
+
         $validator = Validator::make($request->all(), [
-            'name'              => 'required|max:255',
-            'npwp_no'           => 'required|max:15|without_spaces|unique:vendor,npwp_no,'.$vendor_id.',vendor_id',
-            'address'           => 'required',
-            'balance'           => 'required|numeric',
+            'system_code'       => 'required|max:255|without_spaces',
+            'value'             => 'required|max:255',
+            'sequence'          => 'required|numeric',
         ]);
   
         if ($validator->fails()) {
@@ -250,15 +314,16 @@ class VendorController extends Controller
             ->setStatusCode(422);
         }
   
-        $model  = Vendor::where("vendor_id",$vendor_id)->first();
+        $model  = SystemCode::where("system_code_id",$system_code_id)->first();
         if($model){
    
-            Vendor::where("vendor_id",$vendor_id)->update([
-              "name"        => strtoupper($request->name),
-              "address"     => strtoupper($request->address),
-              "npwp_no"     => $request->npwp_no,
-              "balance"     => $request->balance
-          ]); 
+            SystemCode::where("system_code_id",$system_code_id)->update([
+              "system_code"         => strtoupper($request->system_code),
+              "value"               => strtoupper($request->value),
+              "sequence"            => $request->sequence,
+              "update_by"           => $auth->name." ( ".$auth->email." )",
+              "updated_at"          => date("Y-m-d H:i:s")
+            ]); 
     
           $message = trans("translate.Successfully");
           return response()
@@ -270,9 +335,9 @@ class VendorController extends Controller
   
         }else{
 
-            $message = trans("translate.vendorcredentialsnotmatchrecords");
+            $message = trans("translate.credentialsnotmatchrecords");
             return response()
-            ->json(['status'=>404 ,'datas' => null, 'errors' => ["company_id" => [$message]]])
+            ->json(['status'=>404 ,'datas' => null, 'errors' => ["system_code_id" => [$message]]])
             ->withHeaders([
                 'Content-Type'          => 'application/json',
             ])
@@ -289,7 +354,7 @@ class VendorController extends Controller
         ini_set('memory_limit', '-1');
         ini_set('max_execution_time', 0); 
 
-        $file_name      = "vendor-template.xlsx";
+        $file_name      = "system-code-template.xlsx";
         $file_path  	= storage_path('template') . '/' . $file_name;
  
         $headers	= ['Content-Type' => 'application/vnd.ms-excel', 'Content-Disposition' => 'attachment'];
@@ -306,6 +371,17 @@ class VendorController extends Controller
         $auth           = $request->auth;
         $credentials    = $request->credentials;
   
+
+        if($auth->level != "ROOT"){
+            return response()
+            ->json(['status'=>404 ,'datas' => null, 'errors' => null])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(404);
+        }
+
+
         $validator = Validator::make($request->all(), [
             'file'              => 'required|mimes:xlsx',
         ]);
@@ -328,41 +404,19 @@ class VendorController extends Controller
         $removed        = array_splice($datas, 1);
         $response       = [];
 
-
-        $validator = Validator::make($removed, [
-            '*.0' => 'required|max:255',
-            '*.1' => 'required|without_spaces|max:15',
-            '*.2' => 'required',
-            '*.3' => 'required|numeric',
-        ]);
-
-
-        if ($validator->fails()) {
-            return response()
-            ->json(['status'=>422 ,'datas' => null, 'errors' => $validator->errors()])
-            ->withHeaders([
-                'Content-Type'          => 'application/json',
-            ])
-            ->setStatusCode(422);
-        }
-
         for($x=0;$x<count($removed);$x++){
             $data    = $removed[$x];
 
-            $check              = Vendor::where("npwp_no",$data[1])->first();
-            if( $check ){
-                $response[] = ["name" => strtoupper($data[0]) , "status" => "failed" , "message" => "duplicate npwp no"];
-            }else{
-
-                $model              = new Vendor();
-                $model->name        = strtoupper($data[0]);
-                $model->npwp_no     = $data[1];
-                $model->address     = strtoupper($data[2]);
-                $model->balance     = $data[3];
-                $model->save();
-                
-                $response[] = ["name" => strtoupper($data[0]) , "status" => "success" , "message" => ""];
-            }   
+           
+            $model                  = new SystemCode();
+            $model->system_code     = strtoupper($data[0]);
+            $model->value           = strtoupper($data[1]);
+            $model->sequence        = strtoupper($data[2]);
+            $model->create_by       = $auth->name." ( ".$auth->email." )";
+            $model->update_by       = $auth->name." ( ".$auth->email." )";
+            $model->save();
+            
+            $response[] = ["name" => strtoupper($data[1]) , "status" => "success" , "message" => ""];  
 
         }
 
@@ -376,4 +430,50 @@ class VendorController extends Controller
     }
 
 
+
+    public function destroy(Request $request,$system_code_id)
+    {
+        $auth           = $request->auth;
+        $credentials    = $request->credentials;
+  
+
+        if($auth->level != "ROOT"){
+            return response()
+            ->json(['status'=>404 ,'datas' => null, 'errors' => null])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(404);
+        }
+
+ 
+  
+        $model  = SystemCode::where("system_code_id",$system_code_id)->first();
+        if($model){
+   
+            SystemCode::where("system_code_id",$system_code_id)->delete(); 
+    
+            $message = trans("translate.Successfully");
+            return response()
+                ->json(['status'=>200 ,'datas' => ["messages" => $message, "credentials" => $credentials], 'errors' => null])
+                ->withHeaders([
+                    'Content-Type'          => 'application/json',
+                ])
+                ->setStatusCode(200);
+  
+        }else{
+
+            $message = trans("translate.credentialsnotmatchrecords");
+            return response()
+            ->json(['status'=>404 ,'datas' => null, 'errors' => ["system_code_id" => [$message]]])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(404);
+  
+        }
+        
+  
+    }
+  
 }

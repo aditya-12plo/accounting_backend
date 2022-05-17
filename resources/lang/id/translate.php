@@ -15,4 +15,7 @@ return [
 	'ProvidedTokenexpired'	=> 'Masa token ada telah berakhir',
 	'tokendecoding'			=> 'Token gagal di ektrak',
 	'tokenprovided'			=> 'Token anda salah',
+	'credentialsnotmatchrecords' => 'id ini tidak cocok dengan catatan kami',
+	'statusOnlyDraft'			=> 'Hanya Boleh Dengan Status Draft',
+	'duplicateData'			=> 'Duplikasi Data',
 ];

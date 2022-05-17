@@ -4,12 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class BudgetAccount extends Model
+class SystemCode extends Model
 {
-    protected $table        = 'budget_account';
-    protected $primaryKey   = 'budget_account_id';
+    protected $table        = 'system_code';
+    protected $primaryKey   = 'system_code_id';
     protected $fillable     = array(
-        'company_id','division_id','years','bb','bt','sbt','description'
+        'system_code','value','create_by','update_by','sequence'
     );
     public $timestamps = true; 
 	 
@@ -26,13 +26,5 @@ class BudgetAccount extends Model
            ->format('Y-m-d H:i:s');
     }
 
-    public function division()
-    {
-        return $this->belongsTo(Division::class, 'division_id','division_id');
-    }
-
-    public function company()
-    {
-        return $this->belongsTo(Company::class, 'company_id','company_id');
-    }
+    
 }

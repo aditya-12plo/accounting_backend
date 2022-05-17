@@ -148,7 +148,7 @@ class DivisionController extends Controller
 		   return $res;
 		}else{
 			return response()
-					->json(['status'=>500 ,'datas' => null, 'errors' => ['product_code' => 'download file error']])
+					->json(['status'=>500 ,'datas' => null, 'errors' => ['division_id' => ['download file error']]])
 					->withHeaders([
 						'Content-Type'          => 'application/json',
 					  ])
@@ -186,7 +186,7 @@ class DivisionController extends Controller
         }else{
             $message = trans("translate.divisioncredentialsnotmatchrecords");
             return response()
-            ->json(['status'=>404 ,'datas' => null, 'errors' => ["division_id" => $division_id]])
+            ->json(['status'=>404 ,'datas' => null, 'errors' => ["division_id" => [$message]]])
             ->withHeaders([
                 'Content-Type'          => 'application/json',
             ])
@@ -300,7 +300,7 @@ class DivisionController extends Controller
         }else{
             $message = trans("translate.companycredentialsnotmatchrecords");
             return response()
-            ->json(['status'=>404 ,'datas' => null, 'errors' => ["company_id" => $message]])
+            ->json(['status'=>404 ,'datas' => null, 'errors' => ["company_id" => [$message]]])
             ->withHeaders([
                 'Content-Type'          => 'application/json',
             ])
