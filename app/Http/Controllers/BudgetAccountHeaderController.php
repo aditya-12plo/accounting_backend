@@ -341,8 +341,8 @@ class BudgetAccountHeaderController extends Controller
 
             if(@$checkBudgetAccountYear->status == "draft"){
 
-                BudgetAccountHeader::where("budget_account_header_id",$budget_account_header_id)->delete();
                 BudgetAccountDetails::where("budget_account_header_id",$budget_account_header_id)->delete();
+                BudgetAccountHeader::where("budget_account_header_id",$budget_account_header_id)->delete();
     
       
                 $message = trans("translate.Successfully");

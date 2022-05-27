@@ -20,6 +20,7 @@ use App\Models\User;
 use App\Models\Company;
 use App\Models\DivisionMaster;
 use App\Models\UserCompany;
+use App\Models\SystemCode;
 
 class UserController extends Controller
 { 
@@ -287,7 +288,7 @@ class UserController extends Controller
             'email'             => 'required|max:255|without_spaces|email|unique:user,email,'.$user_id.',user_id',
             'division_id'       => 'required|max:255', 
             'status'            => 'required|in:active,deactived',
-            'level'             => 'required|in:STAFF,ROOT',
+            'level'             => 'required|max:50', 
             'company_ids'       => 'required', 
             'signature_file'    => 'mimes:jpeg,jpg,png|max:20000' // max 20000 kb
         ]);
@@ -323,6 +324,7 @@ class UserController extends Controller
                         "name"          => $request->name,
                         "email"         => $request->email,
                         "division_id"   => $checkDivisionMaster->division_id,
+                        "level"         => $request->level,
                         "status"        => $request->status,
                         "password"      => sha1($request->password),
                         "updated_at"    => date("Y-m-d H:i:s")
@@ -333,6 +335,7 @@ class UserController extends Controller
                     User::where("user_id",$user_id)->update([
                         "name"          => $request->name,
                         "email"         => $request->email,
+                        "level"         => $request->level,
                         "division_id"   => $checkDivisionMaster->division_id,
                         "status"        => $request->status,
                         "updated_at"    => date("Y-m-d H:i:s")
@@ -425,7 +428,7 @@ class UserController extends Controller
         $validator = Validator::make($request->all(), [
             'name'              => 'required|max:255',
             'password'          => 'required|max:255',
-            'level'             => 'required|in:STAFF,ROOT',
+            'level'             => 'required|max:50',
             'email'             => 'required|max:255|without_spaces|email|unique:user,email',
             'division_id'       => 'required|max:255', 
             'company_ids'       => 'required', 

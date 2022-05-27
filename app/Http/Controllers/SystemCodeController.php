@@ -47,10 +47,20 @@ class SystemCodeController extends Controller
             ->setStatusCode(422);
         }
 
-        $models  = SystemCode::where('system_code',$request->system_code)->orderBy('system_code_id', 'DESC')->get();
+
+        $value  = $request->value;
+ 
+        $query  = SystemCode::where('system_code',$request->system_code)->select("value")->orderBy('sequence', 'ASC')->limit(10);
   
+        if ($value) {
+            $like = "%{$value}%";
+            $query = $query->where('value', 'LIKE', $like);
+        }
+
+        $response = $query->pluck('value')->toArray();
+
         return response()
-          ->json(['status'=>200 ,'datas' => ["data" => $models, "credentials" => $credentials], 'errors' => null])
+          ->json(['status'=>200 ,'datas' => ["data" => $response, "credentials" => $credentials], 'errors' => null])
           ->withHeaders([
             'Content-Type'          => 'application/json',
             ])

@@ -29,22 +29,6 @@ class VendorController extends Controller
     }
 
 
-    public function getAllData(Request $request){
-        $auth           = $request->auth;
-        $credentials    = $request->credentials;
-        $models  = Vendor::orderBy('vendor_id', 'DESC')->get();
-  
-          return response()
-          ->json(['status'=>200 ,'datas' => ["data" => $models, "credentials" => $credentials], 'errors' => null])
-          ->withHeaders([
-            'Content-Type'          => 'application/json',
-            ])
-          ->setStatusCode(200);
-    }
-
-
-
-
     public function index(Request $request){
         $auth           = $request->auth;
         $credentials    = $request->credentials;
@@ -53,6 +37,7 @@ class VendorController extends Controller
         $sort_field     		= $request->sort_field;
         $sort_type      		= $request->sort_type;
     
+        $company_id     		= $request->company_id;
         $name     				= $request->name;
         $npwp_no 			    = $request->npwp_no;
         $address 			    = $request->address;
@@ -68,6 +53,10 @@ class VendorController extends Controller
         }
             
         $query = Vendor::orderBy($sort_field,$sort_type);
+        
+        if ($company_id) {
+            $query = $query->where('company_id', $company_id);
+        }
         
         if ($name) {
             $like = "%{$name}%";
@@ -116,7 +105,7 @@ class VendorController extends Controller
 
         $spreadsheet 	= new Spreadsheet();
         $sheet 			= $spreadsheet->getActiveSheet();
-        $sheet->setCellValue('A1', 'Vendor ID');
+        $sheet->setCellValue('A1', 'Company ID');
         $sheet->setCellValue('B1', 'Name');
         $sheet->setCellValue('C1', 'Address');
         $sheet->setCellValue('D1', 'NPWP No');
@@ -127,7 +116,7 @@ class VendorController extends Controller
         if(count($datas) > 0){
             $x=2;
             foreach($datas as $data){
-                $sheet->setCellValue('A'.$x, $data->vendor_id);
+                $sheet->setCellValue('A'.$x, $data->company_id);
                 $sheet->setCellValue('B'.$x, $data->name);
                 $sheet->setCellValue('C'.$x, $data->address);
                 $sheet->setCellValue('D'.$x, $data->npwp_no);
@@ -165,8 +154,9 @@ class VendorController extends Controller
         $credentials    = $request->credentials;
     
         $validator = Validator::make($request->all(), [
+            'company_id'        => 'required|max:255',
             'name'              => 'required|max:255',
-            'npwp_no'           => 'required|max:15|without_spaces|unique:vendor,npwp_no',
+            'npwp_no'           => 'required|max:15|without_spaces',
             'address'           => 'required',
             'balance'           => 'required|numeric',
         ]);
@@ -179,8 +169,21 @@ class VendorController extends Controller
             ])
             ->setStatusCode(422);
         }
+
+        $checkNpwp  = Vendor::where([["company_id",$request->company_id],["npwp_no",$request->npwp_no]])->first();
+
+        if($checkNpwp){
+            $message = trans("translate.duplicateData");
+            return response()
+            ->json(['status'=>422 ,'datas' => null, 'errors' => ["npwp_no" => [$message]]])
+            ->withHeaders([
+                'Content-Type'          => 'application/json',
+            ])
+            ->setStatusCode(422);
+        }
    
         $model              = new Vendor();
+        $model->company_id  = strtoupper($request->company_id);
         $model->name        = strtoupper($request->name);
         $model->address     = strtoupper($request->address);
         $model->npwp_no     = $request->npwp_no;
@@ -235,8 +238,9 @@ class VendorController extends Controller
         $credentials    = $request->credentials;
   
         $validator = Validator::make($request->all(), [
+            'company_id'        => 'required|max:255',
             'name'              => 'required|max:255',
-            'npwp_no'           => 'required|max:15|without_spaces|unique:vendor,npwp_no,'.$vendor_id.',vendor_id',
+            'npwp_no'           => 'required|max:15|without_spaces',
             'address'           => 'required',
             'balance'           => 'required|numeric',
         ]);
@@ -252,8 +256,22 @@ class VendorController extends Controller
   
         $model  = Vendor::where("vendor_id",$vendor_id)->first();
         if($model){
+
+            $checkNpwp  = Vendor::where([["company_id",$request->company_id],["npwp_no",$request->npwp_no],["vendor_id","<>",$vendor_id]])->first();
+
+            if($checkNpwp){
+                $message = trans("translate.duplicateData");
+                return response()
+                ->json(['status'=>422 ,'datas' => null, 'errors' => ["npwp_no" => [$message]]])
+                ->withHeaders([
+                    'Content-Type'          => 'application/json',
+                ])
+                ->setStatusCode(422);
+            }
+
    
             Vendor::where("vendor_id",$vendor_id)->update([
+              "company_id"  => strtoupper($request->company_id),
               "name"        => strtoupper($request->name),
               "address"     => strtoupper($request->address),
               "npwp_no"     => $request->npwp_no,
@@ -307,6 +325,7 @@ class VendorController extends Controller
         $credentials    = $request->credentials;
   
         $validator = Validator::make($request->all(), [
+            'company_id'        => 'required|max:255',
             'file'              => 'required|mimes:xlsx',
         ]);
   
@@ -348,13 +367,14 @@ class VendorController extends Controller
 
         for($x=0;$x<count($removed);$x++){
             $data    = $removed[$x];
-
-            $check              = Vendor::where("npwp_no",$data[1])->first();
+ 
+            $check              = Vendor::where([["company_id",$request->company_id],["npwp_no",$data[1]]])->first();
             if( $check ){
                 $response[] = ["name" => strtoupper($data[0]) , "status" => "failed" , "message" => "duplicate npwp no"];
             }else{
 
                 $model              = new Vendor();
+                $model->company_id  = strtoupper($request->company_id);
                 $model->name        = strtoupper($data[0]);
                 $model->npwp_no     = $data[1];
                 $model->address     = strtoupper($data[2]);

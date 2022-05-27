@@ -47,8 +47,7 @@ class BudgetAccountYearController extends Controller
         $perPage        		    = $request->per_page;
         $sort_field     		    = $request->sort_field;
         $sort_type      		    = $request->sort_type;
-    
-        $company_id                         = $request->company_id;
+     
         $year                               = $request->year;
         $status                             = $request->status;
         $create_by                          = $request->create_by;
@@ -69,11 +68,7 @@ class BudgetAccountYearController extends Controller
         if ($status) {
             $query = $query->where('status', $status);
         }
-        
-        if ($company_id) {
-            $query = $query->where('company_id', $company_id);
-        }
-        
+                 
         if ($year) {
             $like = "%{$year}%";
             $query = $query->where('year', 'LIKE', $like);
@@ -121,7 +116,6 @@ class BudgetAccountYearController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'company_id'       => 'required|max:255|without_spaces',
             'year'             => 'required|max:4|without_spaces',
         ]);
   
@@ -134,7 +128,7 @@ class BudgetAccountYearController extends Controller
             ->setStatusCode(422);
         }
 
-        $check  = BudgetAccountYear::where([["company_id",$request->company_id],["year",$request->year],["status","!=","cancelled"]])->first();
+        $check  = BudgetAccountYear::where([["year",$request->year],["status","!=","cancelled"]])->first();
         if($check){
 
             $message = trans("translate.duplicateData");
@@ -148,7 +142,6 @@ class BudgetAccountYearController extends Controller
         }else{
 
             $model                  = new BudgetAccountYear();
-            $model->company_id      = strtoupper($request->company_id);
             $model->year            = strtoupper($request->year);
             $model->status          = "draft";
             $model->create_by       = $auth->name." ( ".$auth->email." )";
@@ -189,7 +182,6 @@ class BudgetAccountYearController extends Controller
 
 
         $validator = Validator::make($request->all(), [
-            'company_id'=> 'required|max:255|without_spaces',
             'year'      => 'required|max:4|without_spaces',
             'status'    => 'required|in:draft,locked,cancelled'
         ]);
@@ -208,7 +200,7 @@ class BudgetAccountYearController extends Controller
  
             if($request->status == "draft"){
                 
-                $model2  = BudgetAccountYear::where([["company_id",$model->company_id],["year",$model->year],["status","!=","cancelled"],["budget_year_id","!=",$model->budget_year_id]])->first();
+                $model2  = BudgetAccountYear::where([["year",$model->year],["status","!=","cancelled"],["budget_year_id","!=",$model->budget_year_id]])->first();
                 if($model2){
 
                     $message = trans("translate.duplicateData");
@@ -222,7 +214,6 @@ class BudgetAccountYearController extends Controller
                 }else{
                 
                     BudgetAccountYear::where("budget_year_id",$budget_year_id)->update([
-                        "company_id"    => $request->company_id,
                         "year"          => $request->year,
                         "status"        => $request->status,
                         "update_by"     => $auth->name." ( ".$auth->email." )",

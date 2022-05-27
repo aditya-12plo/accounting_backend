@@ -4,12 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class BudgetSubmissionTracking extends Model
+class BudgetSubmissionApprovalHistory extends Model
 {
-    protected $table        = 'budget_submission_tracking';
-    protected $primaryKey   = 'budget_submission_tracking_id';
+    protected $table        = 'budget_submission_approval_history';
+    protected $primaryKey   = 'budget_submission_approval_history_id';
     protected $fillable     = array(
-        'created_by','remarks','status'
+        'budget_submission_header_id','user_id','status'
     );
     public $timestamps = true; 
 	 
