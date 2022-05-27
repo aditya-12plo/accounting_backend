@@ -50,6 +50,19 @@ Route::group([
         });
 
         $router->group([
+            'prefix' => 'notification'
+    
+        ], function ($router) {
+
+            Route::get('/index', 'NotificationController@index');
+            // Route::get('/detail/{notification_id}', 'NotificationController@detail');
+            // Route::put('/update/{notification_id}', 'NotificationController@update');
+            // Route::post('/create', 'NotificationController@create');   
+            // Route::delete('/destroy/{notification_id}', 'NotificationController@destroy');
+    
+        });
+
+        $router->group([
             'prefix' => 'company'
     
         ], function ($router) {
