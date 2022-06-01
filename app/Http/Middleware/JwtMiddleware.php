@@ -2,15 +2,20 @@
 namespace App\Http\Middleware;
 use Closure;
 use Exception;
-use App\Models\User;
 use Firebase\JWT\JWT;
 use Firebase\JWT\ExpiredException;
+ 
+
+use App\Models\User;
+
 class JwtMiddleware
 {
     public function handle($request, Closure $next, $guard = null)
     {
-        $token 			= $request->bearerToken();
-        $refreshToken 	= $this->bearerRefreshToken($request);
+        $token 					= $request->bearerToken();
+        $refreshToken 			= $this->bearerRefreshToken($request);
+        $request->credentials	= false;
+
 
         if(!$token) {
             // Unauthorized response if token not there
@@ -26,13 +31,71 @@ class JwtMiddleware
         try {
             $credentials = JWT::decode($token, env('JWT_SECRET'), ['HS256']);
         } catch(ExpiredException $e) {
-			$message = trans("translate.ProvidedTokenexpired");
-			return response()
-				->json(['status'=>401 ,'datas' => null, 'errors' => ['message' => [$message]]])
-				->withHeaders([
-				  'Content-Type'          => 'application/json',
-				  ])
-				->setStatusCode(401);
+
+			if($e->getMessage() == "Expired token"){
+				
+				if($refreshToken){
+					$getUser	= User::with(["division","user_company.company"])->where([["token",$refreshToken],["status","active"]])->first();
+					
+					if($getUser){
+
+						$getTotalLastLogin 				= $this->getTotalLastLogin($getUser->updated_at);
+						if($getTotalLastLogin < 30){
+
+							$getNewToken			= $this->refreshToken($getUser);
+							
+							$request->auth			= $getUser;
+							$request->credentials	= ["access_token" => $getNewToken, "refresh_token" => $refreshToken];
+						
+							return $next($request);
+
+						}else{
+							
+							$message = trans("translate.ProvidedTokenexpired");
+							return response()
+								->json(['status'=>401 ,'datas' => null, 'errors' => ['message' => [$message]]])
+								->withHeaders([
+								'Content-Type'          => 'application/json',
+								])
+								->setStatusCode(401);
+
+						}
+
+					}else{
+
+						$message = trans("translate.ProvidedTokenexpired");
+						return response()
+							->json(['status'=>401 ,'datas' => null, 'errors' => ['message' => [$message]]])
+							->withHeaders([
+							  'Content-Type'          => 'application/json',
+							  ])
+							->setStatusCode(401);
+
+					}
+ 
+				}else{
+
+					$message = trans("translate.ProvidedTokenexpired");
+					return response()
+						->json(['status'=>401 ,'datas' => null, 'errors' => ['message' => [$message]]])
+						->withHeaders([
+						  'Content-Type'          => 'application/json',
+						  ])
+						->setStatusCode(401);
+				}
+
+			}else{
+
+				$message = trans("translate.ProvidedTokenexpired");
+				return response()
+					->json(['status'=>401 ,'datas' => null, 'errors' => ['message' => [$message]]])
+					->withHeaders([
+					  'Content-Type'          => 'application/json',
+					  ])
+					->setStatusCode(401);
+
+			}
+
         } catch(Exception $e) {
 			$message = trans("translate.tokendecoding");
 			return response()
@@ -41,36 +104,9 @@ class JwtMiddleware
 				  'Content-Type'          => 'application/json',
 				  ])
 				->setStatusCode(401);
-        }
-        // $user = User::find($credentials->sub->user_id);
-        // Now let's put the user in the request class so that you can grab it from there
-
-
-
+        } 
+     
         $request->auth 					= $credentials->sub;
-        $request->credentials 			= false;
-        $getTotalLastLogin 				= $this->getTotalLastLogin($credentials->sub->updated_at);
-
-		if($getTotalLastLogin > 4){
-
-			$getNewToken	= $this->refreshToken($refreshToken);
-
-			if($getNewToken){
-				$request->credentials 				= ["access_token" => $getNewToken, "refresh_token" => $credentials->sub->token];
-			}else{
-				
-				$message = trans("translate.ProvidedTokenexpired");
-				return response()
-				->json(['status'=>401 ,'datas' => null, 'errors' => ['message' => [$message]]])
-				->withHeaders([
-				'Content-Type'          => 'application/json',
-				])
-				->setStatusCode(401);
-
-			}
-
-		}
-
         return $next($request);
     }
 	
@@ -101,25 +137,19 @@ class JwtMiddleware
 	}
 
 	
-	private function refreshToken($token){
-		$user = User::where([["token",$token],["status","active"]])->first();
-		if($user){
-			User::where("user_id",$user->user_id)->update([
-                "updated_at"    => date("Y-m-d H:i:s")
-            ]);
-
-			$check  = User::with(["division"])->where("user_id",$user->user_id)->first();
-			$payload = [
-				'iss' => "token",
-				'sub' => $user,
-				'iat' => time(),
-				'exp' => time() + (1440*60*7)
-			];
-			
-			return JWT::encode($payload, env('JWT_SECRET'));
-		}else{
-			return false;
-		}
+	private function refreshToken($user){
+		User::where("user_id",$user->user_id)->update([
+			"updated_at"    => date("Y-m-d H:i:s")
+		]);
+ 
+		$payload = [
+			'iss' => "token",
+			'sub' => $user,
+			'iat' => time(),
+			'exp' => time() + (1440*60*7)
+		];
+		
+		return JWT::encode($payload, env('JWT_SECRET'));
 	}
 
  
