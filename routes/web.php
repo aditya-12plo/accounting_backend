@@ -12,6 +12,7 @@ Route::group([
     $router->post('/auth/reset-password',['as' => 'userResetPassword','uses' => 'AuthController@userResetPassword']);
     $router->post('/auth/change-password',['as' => 'userChangePassword','uses' => 'AuthController@userChangePassword']);
 
+
     
     $router->group([
         'prefix' => 'xxxadminxxx'
